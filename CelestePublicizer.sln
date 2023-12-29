@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CelestePublicizer", "CelestePublicizer.csproj", "{4BBF5281-6AA8-479D-A0F0-14B768C113C6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CelestePublicizer.Testing", "CelestePublicizer.Testing\CelestePublicizer.Testing.csproj", "{34D1F076-EE81-466C-B10F-F8C03CD68D5D}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{4BBF5281-6AA8-479D-A0F0-14B768C113C6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4BBF5281-6AA8-479D-A0F0-14B768C113C6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4BBF5281-6AA8-479D-A0F0-14B768C113C6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4BBF5281-6AA8-479D-A0F0-14B768C113C6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{34D1F076-EE81-466C-B10F-F8C03CD68D5D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{34D1F076-EE81-466C-B10F-F8C03CD68D5D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{34D1F076-EE81-466C-B10F-F8C03CD68D5D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{34D1F076-EE81-466C-B10F-F8C03CD68D5D}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

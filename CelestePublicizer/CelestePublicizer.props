@@ -1,0 +1,7 @@
+<Project>
+    <PropertyGroup>
+        <CelestePublicizerProperty Condition=" '$(CelestePublicizerProperty)' == '' ">HelloWorld</CelestePublicizerProperty>
+
+        <_CelestePublicizerPropsFile>$(MSBuildThisFile)</_CelestePublicizerPropsFile>
+    <PropertyGroup>
+</Project>
