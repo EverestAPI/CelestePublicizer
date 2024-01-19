@@ -23,30 +23,10 @@ public class PublicizeTask : Task {
 
     public override bool Execute()
     {
-        var outputDirectory = Path.Combine(IntermediateOutputPath, "celeste-publicized");
-        Directory.CreateDirectory(outputDirectory);
-        
-        var referencesToPublicize = ReferencePath
-            .Where(x => x.HasMetadata("MaskAssembly"));
-        var packagesToPublicize = PackageReference
-            .Where(x => x.HasMetadata("MaskAssembly"));
-        
-        var toPublicize = referencesToPublicize.Concat(packagesToPublicize);
-        
-        foreach (var taskItem in toPublicize) {
-            var assemblyPath = taskItem.GetMetadata("FullPath");
-            var maskPath = taskItem.GetMetadata("MaskAssembly");
-            
-            var hash = ComputeHash(File.ReadAllBytes(assemblyPath), maskPath);
-            
-            var publicizedAssemblyPath = Path.Combine(outputDirectory, Path.GetFileName(assemblyPath));
-            var hashPath = publicizedAssemblyPath + ".md5";
-            
-            if (File.Exists(hashPath) && File.ReadAllText(hashPath) == hash)
-            {
-                // Log.LogMessage($"{fileName} was already publicized, skipping");
-                continue;
-            }
+        Console.WriteLine("hi");
+        foreach (var taskItem in PackageReference)
+        {
+            Console.WriteLine(taskItem);
         }
         
         return true;

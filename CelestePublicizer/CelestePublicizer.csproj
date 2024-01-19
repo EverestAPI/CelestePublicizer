@@ -8,11 +8,14 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <Content Include="CelestePublicizer.props;$(OutputPath)/*.dll;$(OutputPath)/*.pdb" Pack="true" PackagePath="build/"/>
+        <PackageReference Include="Microsoft.Build.Framework" Version="15.1.548"/>
+        <PackageReference Include="Microsoft.Build.Utilities.Core" Version="15.1.548"/>
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.Build.Framework" Version="15.1.548"/>
-        <PackageReference Include="Microsoft.Build.Utilities.Core" Version="15.1.548"/>
+        <Content Include="$(MSBuildProjectName).props;$(OutputPath)/*.dll;$(OutputPath)/*.pdb" Pack="true" PackagePath="build"/>
+
+        <Compile Remove="IgnoresAccessChecksToAttribute.cs"/>
+        <Content Include="IgnoresAccessChecksToAttribute.cs" Pack="true" PackagePath="contentFiles/cs/any" BuildAction="Compile"/>
     </ItemGroup>
 </Project>
