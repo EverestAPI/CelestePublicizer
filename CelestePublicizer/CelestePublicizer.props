@@ -1,7 +1,34 @@
 <Project>
     <PropertyGroup>
-        <CelestePublicizerProperty Condition=" '$(CelestePublicizerProperty)' == '' ">HelloWorld</CelestePublicizerProperty>
+        <_CelestePublicizer_TaskAssembly>$(MSBuildThisFileDirectory)..\lib\net7.0\$(MSBuildThisFileName).dll</_CelestePublicizer_TaskAssembly>
+    </PropertyGroup>
+            
+    <UsingTask TaskName="PublicizeTask" AssemblyFile="$(_CelestePublicizer_TaskAssembly)" />
+    
+    <Target Name="Publicize"  AfterTargets="ResolveReferences" BeforeTargets="FindReferenceAssembliesForReferences">
+        <PublicizeTask IntermediateOutputPath="$(IntermediateOutputPath)" ReferencePath="@(ReferencePath)" PackageReference="@(PackageReference)">
+            <Output TaskParameter="RemovedReferences" ItemName="_RemovedReferences" />
+            <Output TaskParameter="PublicizedReferences" ItemName="_PublicizedReferences" />
+        </PublicizeTask>
 
-        <_CelestePublicizerPropsFile>$(MSBuildThisFile)</_CelestePublicizerPropsFile>
-    <PropertyGroup>
+        <ItemGroup>
+            <ReferencePath Remove="@(_RemovedReferences)" />
+            <ReferencePath Include="@(_PublicizedReferences)" />
+
+            <AssemblyAttribute Include="System.Runtime.CompilerServices.IgnoresAccessChecksToAttribute">
+                <_Parameter1>%(_PublicizedReferences.Filename)</_Parameter1>
+            </AssemblyAttribute>
+        </ItemGroup>
+
+        <PropertyGroup>
+            <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        </PropertyGroup>
+    </Target>
+
+    <!-- Hide IgnoresAccessChecksToAttribute.cs (https://github.com/NuGet/Home/issues/4856#issuecomment-287957396) -->
+    <ItemGroup>
+        <Compile Update="@(Compile)">
+            <Visible Condition="'%(NuGetItemType)' == 'Compile'">false</Visible>
+        </Compile>
+    </ItemGroup>
 </Project>
