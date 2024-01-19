@@ -6,6 +6,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.Loader;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -14,21 +15,41 @@ namespace CelestePublicizer;
 public class PublicizeTask : Task {
     [Required]
     public string IntermediateOutputPath { get; set; }
-
-    [Required]
-    public ITaskItem[] ReferencePath { get; set; }
     
     [Required]
     public ITaskItem[] PackageReference { get; set; }
 
     public override bool Execute()
     {
-        Console.WriteLine("hi");
-        foreach (var taskItem in PackageReference)
-        {
-            Console.WriteLine(taskItem);
+        const string PackageName = "CelestePublicizer";
+        var celestePackages = PackageReference
+            .Where(item => item.TryGetMetadata("Identity", out string identity) && identity == PackageName)
+            .ToArray();
+
+        if (celestePackages.Length == 0) return true;
+        if (celestePackages.Length > 1) {
+            Log.LogError($"Specified {PackageName} package more than once");
+            return false;
         }
         
+        var celestePackage = celestePackages[0];
+        if (!celestePackage.TryGetMetadata("CelesteAssembly", out string celesteAssemblyPath)) {
+            Log.LogError($"The \"CelesteAssembly\" property needs to be specified for the {PackageName} package");
+            return false;
+        }
+        
+        string outputAssemblyPath = $"{IntermediateOutputPath}Celeste-publicized.dll";
+        string outputHashPath = $"{IntermediateOutputPath}Celeste-publicized.dll.md5";
+        
+        var assembly = typeof(PublicizeTask).Assembly;
+        foreach (var manifestResourceName in assembly.GetManifestResourceNames())
+        {
+            Console.WriteLine(manifestResourceName);
+        }
+        
+        var origAssemblyStream = assembly.GetManifestResourceStream($"{PackageName}.Assets.Celeste.exe");
+        var origAssembly = AssemblyLoadContext.GetLoadContext(assembly).LoadFromStream(origAssemblyStream);
+
         return true;
     }
     

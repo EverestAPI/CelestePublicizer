@@ -9,7 +9,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="CelestePublicizer" Version="1.0.0" />
+      <PackageReference Include="CelestePublicizer" Version="1.0.0" CelesteAssembly="/media/Storage/Games/Celeste_NETCore3/Celeste.dll" />
     </ItemGroup>
 
 </Project>

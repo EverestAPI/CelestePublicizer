@@ -6,7 +6,7 @@
     <UsingTask TaskName="PublicizeTask" AssemblyFile="$(_CelestePublicizer_TaskAssembly)" />
     
     <Target Name="Publicize"  AfterTargets="ResolveReferences" BeforeTargets="FindReferenceAssembliesForReferences">
-        <PublicizeTask IntermediateOutputPath="$(IntermediateOutputPath)" ReferencePath="@(ReferencePath)" PackageReference="@(PackageReference)">
+        <PublicizeTask IntermediateOutputPath="$(IntermediateOutputPath)" PackageReference="@(PackageReference)">
         </PublicizeTask>
 
         <ItemGroup>

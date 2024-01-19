@@ -10,10 +10,13 @@
     <ItemGroup>
         <PackageReference Include="Microsoft.Build.Framework" Version="15.1.548"/>
         <PackageReference Include="Microsoft.Build.Utilities.Core" Version="15.1.548"/>
+        <PackageReference Include="System.Runtime.Loader" Version="4.3.0" />
     </ItemGroup>
 
     <ItemGroup>
-        <Content Include="$(MSBuildProjectName).props;$(OutputPath)/*.dll;$(OutputPath)/*.pdb" Pack="true" PackagePath="build"/>
+        <EmbeddedResource Include="Assets\**\*" />
+        
+        <Content Include="$(MSBuildProjectName).props;$(OutputPath)\*.dll;$(OutputPath)\*.pdb" Pack="true" PackagePath="build"/>
 
         <Compile Remove="IgnoresAccessChecksToAttribute.cs"/>
         <Content Include="IgnoresAccessChecksToAttribute.cs" Pack="true" PackagePath="contentFiles/cs/any" BuildAction="Compile"/>
