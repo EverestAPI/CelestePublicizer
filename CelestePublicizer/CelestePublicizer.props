@@ -3,12 +3,12 @@
         <_CelestePublicizer_TaskAssembly>$(MSBuildThisFileDirectory)$(MSBuildThisFileName).dll</_CelestePublicizer_TaskAssembly>
     </PropertyGroup>
             
-    <UsingTask TaskName="PublicizeTask" AssemblyFile="$(_CelestePublicizer_TaskAssembly)" />
+    <UsingTask TaskName="PublicizeCelesteTask" AssemblyFile="$(_CelestePublicizer_TaskAssembly)" />
     
-    <Target Name="Publicize"  AfterTargets="ResolveReferences" BeforeTargets="FindReferenceAssembliesForReferences">
-        <PublicizeTask IntermediateOutputPath="$(IntermediateOutputPath)" PackageReference="@(PackageReference)">
+    <Target Name="PublicizeCeleste"  AfterTargets="ResolveReferences" BeforeTargets="FindReferenceAssembliesForReferences">
+        <PublicizeCelesteTask IntermediateOutputPath="$(IntermediateOutputPath)" PackageReference="@(PackageReference)">
             <Output TaskParameter="PublicizedReference" ItemName="_PublicizedReference" />
-        </PublicizeTask>
+        </PublicizeCelesteTask>
 
         <ItemGroup>
             <ReferencePath Include="@(_PublicizedReference)" />

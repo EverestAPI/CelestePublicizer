@@ -16,7 +16,7 @@ using TypeAttributes = AsmResolver.PE.DotNet.Metadata.Tables.Rows.TypeAttributes
 
 namespace CelestePublicizer;
 
-public class PublicizeTask : Task {
+public class PublicizeCelesteTask : Task {
 
     [Required]
     public string IntermediateOutputPath { get; set; }
@@ -48,7 +48,7 @@ public class PublicizeTask : Task {
         string outputAssemblyPath = $"{IntermediateOutputPath}Celeste-publicized.dll";
         string outputHashPath = $"{outputAssemblyPath}.md5";
         
-        var taskAssembly = typeof(PublicizeTask).Assembly;
+        var taskAssembly = typeof(PublicizeCelesteTask).Assembly;
         
         var celesteAssemblyBytes = File.ReadAllBytes(celesteAssemblyPath);
         var celesteAssembly = AssemblyDefinition.FromBytes(celesteAssemblyBytes);
@@ -180,7 +180,7 @@ public class PublicizeTask : Task {
 
         using var md5 = MD5.Create();
 
-        HashString(md5, typeof(PublicizeTask).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()!.InformationalVersion);
+        HashString(md5, typeof(PublicizeCelesteTask).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()!.InformationalVersion);
         Hash(md5, maskBytes);
 
         md5.TransformFinalBlock(bytes, 0, bytes.Length);
