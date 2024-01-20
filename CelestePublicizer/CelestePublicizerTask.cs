@@ -1,17 +1,14 @@
 using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
-using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.Loader;
 using System.Security.Cryptography;
 using System.Text;
 using AsmResolver;
 using AsmResolver.DotNet;
-using AsmResolver.IO;
 using BepInEx.AssemblyPublicizer;
 using FieldAttributes = AsmResolver.PE.DotNet.Metadata.Tables.Rows.FieldAttributes;
 using MethodAttributes = AsmResolver.PE.DotNet.Metadata.Tables.Rows.MethodAttributes;
@@ -96,31 +93,37 @@ public class PublicizeTask : Task {
 
         var maskTypes = maskModule.GetAllTypes().ToDictionary(x => x.FullName);
         
+        var attribute = new OrigVisibilityAttribute(module);
+        
         foreach (var typeDefinition in module.GetAllTypes()) {
             if (!maskTypes.ContainsKey(typeDefinition.FullName))
                 continue;
 
-            PublicizeType(typeDefinition, maskTypes[typeDefinition.FullName]);
+            PublicizeType(typeDefinition, maskTypes[typeDefinition.FullName], attribute);
         }
     }
     
-    private static void PublicizeType(TypeDefinition typeDefinition, TypeDefinition maskTypeDefinition) {
+    private static void PublicizeType(TypeDefinition typeDefinition, TypeDefinition maskTypeDefinition, OrigVisibilityAttribute attribute) {
         if (!typeDefinition.IsNested && !typeDefinition.IsPublic || typeDefinition.IsNested && !typeDefinition.IsNestedPublic) {
+            var origAttrs = typeDefinition.Attributes;
+            
             typeDefinition.Attributes &= ~TypeAttributes.VisibilityMask;
             typeDefinition.Attributes |= typeDefinition.IsNested ? TypeAttributes.NestedPublic : TypeAttributes.Public;
+            
+            typeDefinition.CustomAttributes.Add(attribute.ToCustomAttribute(origAttrs & TypeAttributes.VisibilityMask));
         }
 
         var maskMethods = maskTypeDefinition?.Methods.Select(x => x.FullName).ToArray();
         foreach (var methodDefinition in typeDefinition.Methods) {
             if (maskMethods != null && !maskMethods.Contains(methodDefinition.FullName))
                 continue;
-            PublicizeMethod(methodDefinition);
+            PublicizeMethod(methodDefinition, attribute);
         }
 
         foreach (var propertyDefinition in typeDefinition.Properties)
         {
-            if (propertyDefinition.GetMethod is { } getMethod) PublicizeMethod(getMethod, ignoreCompilerGeneratedCheck: true);
-            if (propertyDefinition.SetMethod is { } setMethod) PublicizeMethod(setMethod, ignoreCompilerGeneratedCheck: true);
+            if (propertyDefinition.GetMethod is { } getMethod) PublicizeMethod(getMethod, attribute, ignoreCompilerGeneratedCheck: true);
+            if (propertyDefinition.SetMethod is { } setMethod) PublicizeMethod(setMethod, attribute, ignoreCompilerGeneratedCheck: true);
         }
 
         var maskFields = maskTypeDefinition?.Fields.Select(x => x.FullName).ToArray();
@@ -140,22 +143,30 @@ public class PublicizeTask : Task {
                     continue;
                 if (fieldDefinition.IsCompilerGenerated())
                     continue;
+                
+                var origAttrs = fieldDefinition.Attributes;
 
                 fieldDefinition.Attributes &= ~FieldAttributes.FieldAccessMask;
                 fieldDefinition.Attributes |= FieldAttributes.Public;
+                
+                fieldDefinition.CustomAttributes.Add(attribute.ToCustomAttribute(origAttrs & FieldAttributes.FieldAccessMask));
             }
         }
     }
     
-    private static void PublicizeMethod(MethodDefinition methodDefinition, bool ignoreCompilerGeneratedCheck = false) {
+    private static void PublicizeMethod(MethodDefinition methodDefinition, OrigVisibilityAttribute attribute, bool ignoreCompilerGeneratedCheck = false) {
         if (methodDefinition.IsCompilerControlled)
             return;
         if (!ignoreCompilerGeneratedCheck && methodDefinition.IsCompilerGenerated())
             return;
 
         if (!methodDefinition.IsPublic) {
+            var origAttrs = methodDefinition.Attributes;
+            
             methodDefinition.Attributes &= ~MethodAttributes.MemberAccessMask;
             methodDefinition.Attributes |= MethodAttributes.Public;
+            
+            methodDefinition.CustomAttributes.Add(attribute.ToCustomAttribute(origAttrs & MethodAttributes.MemberAccessMask));
         }
     }
     
