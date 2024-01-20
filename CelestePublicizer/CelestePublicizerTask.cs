@@ -9,6 +9,13 @@ using System.Reflection;
 using System.Runtime.Loader;
 using System.Security.Cryptography;
 using System.Text;
+using AsmResolver;
+using AsmResolver.DotNet;
+using AsmResolver.IO;
+using BepInEx.AssemblyPublicizer;
+using FieldAttributes = AsmResolver.PE.DotNet.Metadata.Tables.Rows.FieldAttributes;
+using MethodAttributes = AsmResolver.PE.DotNet.Metadata.Tables.Rows.MethodAttributes;
+using TypeAttributes = AsmResolver.PE.DotNet.Metadata.Tables.Rows.TypeAttributes;
 
 namespace CelestePublicizer;
 
@@ -19,8 +26,7 @@ public class PublicizeTask : Task {
     [Required]
     public ITaskItem[] PackageReference { get; set; }
 
-    public override bool Execute()
-    {
+    public override bool Execute() {
         const string PackageName = "CelestePublicizer";
         var celestePackages = PackageReference
             .Where(item => item.TryGetMetadata("Identity", out string identity) && identity == PackageName)
@@ -41,16 +47,92 @@ public class PublicizeTask : Task {
         string outputAssemblyPath = $"{IntermediateOutputPath}Celeste-publicized.dll";
         string outputHashPath = $"{IntermediateOutputPath}Celeste-publicized.dll.md5";
         
-        var assembly = typeof(PublicizeTask).Assembly;
-        foreach (var manifestResourceName in assembly.GetManifestResourceNames())
-        {
-            Console.WriteLine(manifestResourceName);
-        }
+        var taskAssembly = typeof(PublicizeTask).Assembly;
         
-        var origAssemblyStream = assembly.GetManifestResourceStream($"{PackageName}.Assets.Celeste.exe");
-        var origAssembly = AssemblyLoadContext.GetLoadContext(assembly).LoadFromStream(origAssemblyStream);
-
+        var celesteAssembly = AssemblyDefinition.FromFile(celesteAssemblyPath);
+        
+        var origAssemblyStream = taskAssembly.GetManifestResourceStream($"{PackageName}.Assets.Celeste.exe")!;
+        var memoryStream = new MemoryStream(); 
+        origAssemblyStream.CopyTo(memoryStream);
+        var origAssembly = AssemblyDefinition.FromBytes(memoryStream.ToArray());
+        
+        PublicizeAssembly(celesteAssembly, origAssembly);
+        
+        var module = celesteAssembly.ManifestModule;
+        module.FatalWrite(outputAssemblyPath);
+        
         return true;
+    }
+    
+    // Adapted from https://github.com/psyGamer/BepInEx.AssemblyPublicizer/blob/master/BepInEx.AssemblyPublicizer/AssemblyPublicizer.cs
+    private static void PublicizeAssembly(AssemblyDefinition assembly, AssemblyDefinition maskAssembly)
+    {
+        var module = assembly.ManifestModule!;
+        var maskModule = maskAssembly.ManifestModule!;
+
+        var maskTypes = maskModule.GetAllTypes().ToDictionary(x => x.FullName);
+        
+        foreach (var typeDefinition in module.GetAllTypes()) {
+            if (!maskTypes.ContainsKey(typeDefinition.FullName))
+                continue;
+
+            PublicizeType(typeDefinition, maskTypes[typeDefinition.FullName]);
+        }
+    }
+    
+    private static void PublicizeType(TypeDefinition typeDefinition, TypeDefinition maskTypeDefinition) {
+        if (!typeDefinition.IsNested && !typeDefinition.IsPublic || typeDefinition.IsNested && !typeDefinition.IsNestedPublic) {
+            typeDefinition.Attributes &= ~TypeAttributes.VisibilityMask;
+            typeDefinition.Attributes |= typeDefinition.IsNested ? TypeAttributes.NestedPublic : TypeAttributes.Public;
+        }
+
+        var maskMethods = maskTypeDefinition?.Methods.Select(x => x.FullName).ToArray();
+        foreach (var methodDefinition in typeDefinition.Methods) {
+            if (maskMethods != null && !maskMethods.Contains(methodDefinition.FullName))
+                continue;
+            PublicizeMethod(methodDefinition);
+        }
+
+        foreach (var propertyDefinition in typeDefinition.Properties)
+        {
+            if (propertyDefinition.GetMethod is { } getMethod) PublicizeMethod(getMethod, ignoreCompilerGeneratedCheck: true);
+            if (propertyDefinition.SetMethod is { } setMethod) PublicizeMethod(setMethod, ignoreCompilerGeneratedCheck: true);
+        }
+
+        var maskFields = maskTypeDefinition?.Fields.Select(x => x.FullName).ToArray();
+        
+        var eventNames = new HashSet<Utf8String?>(typeDefinition.Events.Select(e => e.Name));
+        foreach (var fieldDefinition in typeDefinition.Fields)
+        {
+            if (fieldDefinition.IsPrivateScope)
+                continue;
+            if (maskFields != null && !maskFields.Contains(fieldDefinition.FullName))
+                continue;
+
+            if (!fieldDefinition.IsPublic)
+            {
+                // Skip event backing fields
+                if (eventNames.Contains(fieldDefinition.Name))
+                    continue;
+                if (fieldDefinition.IsCompilerGenerated())
+                    continue;
+
+                fieldDefinition.Attributes &= ~FieldAttributes.FieldAccessMask;
+                fieldDefinition.Attributes |= FieldAttributes.Public;
+            }
+        }
+    }
+    
+    private static void PublicizeMethod(MethodDefinition methodDefinition, bool ignoreCompilerGeneratedCheck = false) {
+        if (methodDefinition.IsCompilerControlled)
+            return;
+        if (!ignoreCompilerGeneratedCheck && methodDefinition.IsCompilerGenerated())
+            return;
+
+        if (!methodDefinition.IsPublic) {
+            methodDefinition.Attributes &= ~MethodAttributes.MemberAccessMask;
+            methodDefinition.Attributes |= MethodAttributes.Public;
+        }
     }
     
     // Adapted from https://github.com/BepInEx/BepInEx.AssemblyPublicizer/blob/master/BepInEx.AssemblyPublicizer.MSBuild/PublicizeTask.cs#L132-L168
