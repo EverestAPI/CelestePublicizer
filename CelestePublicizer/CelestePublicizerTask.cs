@@ -20,11 +20,15 @@ using TypeAttributes = AsmResolver.PE.DotNet.Metadata.Tables.Rows.TypeAttributes
 namespace CelestePublicizer;
 
 public class PublicizeTask : Task {
+
     [Required]
     public string IntermediateOutputPath { get; set; }
     
     [Required]
     public ITaskItem[] PackageReference { get; set; }
+    
+    [Output]
+    public ITaskItem PublicizedReference { get; private set; }
 
     public override bool Execute() {
         const string PackageName = "CelestePublicizer";
@@ -45,21 +49,41 @@ public class PublicizeTask : Task {
         }
         
         string outputAssemblyPath = $"{IntermediateOutputPath}Celeste-publicized.dll";
-        string outputHashPath = $"{IntermediateOutputPath}Celeste-publicized.dll.md5";
+        string outputHashPath = $"{outputAssemblyPath}.md5";
         
         var taskAssembly = typeof(PublicizeTask).Assembly;
         
-        var celesteAssembly = AssemblyDefinition.FromFile(celesteAssemblyPath);
+        var celesteAssemblyBytes = File.ReadAllBytes(celesteAssemblyPath);
+        var celesteAssembly = AssemblyDefinition.FromBytes(celesteAssemblyBytes);
         
         var origAssemblyStream = taskAssembly.GetManifestResourceStream($"{PackageName}.Assets.Celeste.exe")!;
         var memoryStream = new MemoryStream(); 
         origAssemblyStream.CopyTo(memoryStream);
-        var origAssembly = AssemblyDefinition.FromBytes(memoryStream.ToArray());
+        var origAssemblyBytes = memoryStream.ToArray();
+        var origAssembly = AssemblyDefinition.FromBytes(origAssemblyBytes);
+
+        var hash = ComputeHash(celesteAssemblyBytes, origAssemblyBytes);
+        if (File.Exists(outputHashPath) && File.ReadAllText(outputHashPath) == hash) {
+            Log.LogMessage($"{celesteAssemblyPath} was already publicized, skipping");
+            // return true;
+        }
         
         PublicizeAssembly(celesteAssembly, origAssembly);
         
         var module = celesteAssembly.ManifestModule;
         module.FatalWrite(outputAssemblyPath);
+
+        PublicizedReference = new TaskItem(outputAssemblyPath);
+        celestePackage.CopyMetadataTo(PublicizedReference);
+        celestePackage.RemoveMetadata("ReferenceAssembly");
+        
+        var originalDocumentationPath = Path.ChangeExtension(celesteAssemblyPath, "xml");
+        if (File.Exists(originalDocumentationPath)) {
+            File.Copy(originalDocumentationPath, Path.ChangeExtension(outputAssemblyPath, "xml"), true);
+        }
+        
+        File.WriteAllText(outputHashPath, hash);
+        Log.LogMessage($"Publicized {celesteAssemblyPath}");
         
         return true;
     }
@@ -136,19 +160,17 @@ public class PublicizeTask : Task {
     }
     
     // Adapted from https://github.com/BepInEx/BepInEx.AssemblyPublicizer/blob/master/BepInEx.AssemblyPublicizer.MSBuild/PublicizeTask.cs#L132-L168
-    private static string ComputeHash(byte[] bytes, string mask) {
+    private static string ComputeHash(byte[] bytes, byte[] maskBytes) {
         static void Hash(ICryptoTransform hash, byte[] buffer) {
             hash.TransformBlock(buffer, 0, buffer.Length, buffer, 0);
         }
 
         static void HashString(ICryptoTransform hash, string str) => Hash(hash, Encoding.UTF8.GetBytes(str));
-        static void HashBool(ICryptoTransform hash, bool value) => Hash(hash, BitConverter.GetBytes(value));
-        static void HashInt(ICryptoTransform hash, int value) => Hash(hash, BitConverter.GetBytes(value));
 
         using var md5 = MD5.Create();
 
-        HashString(md5, typeof(PublicizeTask).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion);
-        HashString(md5, mask);
+        HashString(md5, typeof(PublicizeTask).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()!.InformationalVersion);
+        Hash(md5, maskBytes);
 
         md5.TransformFinalBlock(bytes, 0, bytes.Length);
 
@@ -157,11 +179,9 @@ public class PublicizeTask : Task {
     
     private static string ByteArrayToString(IReadOnlyCollection<byte> data) {
         var builder = new StringBuilder(data.Count * 2);
-
         foreach (var b in data) {
-            builder.AppendFormat("{0:x2}", b);
+            builder.Append($"{b:x2}");
         }
-
         return builder.ToString();
     }
 }

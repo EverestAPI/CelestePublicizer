@@ -7,15 +7,15 @@
     
     <Target Name="Publicize"  AfterTargets="ResolveReferences" BeforeTargets="FindReferenceAssembliesForReferences">
         <PublicizeTask IntermediateOutputPath="$(IntermediateOutputPath)" PackageReference="@(PackageReference)">
+            <Output TaskParameter="PublicizedReference" ItemName="_PublicizedReference" />
         </PublicizeTask>
 
         <ItemGroup>
-<!--            <ReferencePath Remove="@(_RemovedReferences)" />-->
-<!--            <ReferencePath Include="@(_PublicizedReferences)" />-->
+            <ReferencePath Include="@(_PublicizedReference)" />
 
-<!--            <AssemblyAttribute Include="System.Runtime.CompilerServices.IgnoresAccessChecksToAttribute">-->
-<!--                <_Parameter1>%(_PublicizedReferences.Filename)</_Parameter1>-->
-<!--            </AssemblyAttribute>-->
+            <AssemblyAttribute Include="System.Runtime.CompilerServices.IgnoresAccessChecksToAttribute">
+                <_Parameter1>Celeste</_Parameter1>
+            </AssemblyAttribute>
         </ItemGroup>
 
         <PropertyGroup>
