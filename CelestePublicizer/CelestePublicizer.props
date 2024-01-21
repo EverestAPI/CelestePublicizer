@@ -5,7 +5,7 @@
             
     <UsingTask TaskName="PublicizeCelesteTask" AssemblyFile="$(_CelestePublicizer_TaskAssembly)" />
     
-    <Target Name="PublicizeCeleste"  AfterTargets="ResolveReferences" BeforeTargets="FindReferenceAssembliesForReferences">
+    <Target Name="PublicizeCeleste" AfterTargets="ResolveReferences" BeforeTargets="FindReferenceAssembliesForReferences">
         <PublicizeCelesteTask IntermediateOutputPath="$(IntermediateOutputPath)" PackageReference="@(PackageReference)">
             <Output TaskParameter="PublicizedReference" ItemName="_PublicizedReference" />
         </PublicizeCelesteTask>
@@ -22,11 +22,4 @@
             <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         </PropertyGroup>
     </Target>
-
-    <!-- Hide IgnoresAccessChecksToAttribute.cs (https://github.com/NuGet/Home/issues/4856#issuecomment-287957396) -->
-    <ItemGroup>
-        <Compile Update="@(Compile)">
-            <Visible Condition="'%(NuGetItemType)' == 'Compile'">false</Visible>
-        </Compile>
-    </ItemGroup>
 </Project>
