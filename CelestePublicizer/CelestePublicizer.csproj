@@ -8,6 +8,26 @@
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     </PropertyGroup>
 
+    <PropertyGroup>
+        <PackageType>Template</PackageType>
+        <PackageId>CelesteMod.Publicizer</PackageId>
+        <Title>Celeste Mod publicizer</Title>
+        <Authors>EverestAPI</Authors>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <PackageProjectUrl>https://github.com/EverestAPI/CelestePublicizer/blob/master/CelestePublicizer</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/EverestAPI/CelestePublicizer</RepositoryUrl>
+        <PackageReleaseNotes>Automated release.</PackageReleaseNotes>
+        <Copyright>Copyright (c) 2024 EverestAPI</Copyright>
+        <Description>Build task to publicize vanilla Celeste..</Description>
+        <PackageTags>publicizer;celeste;mod;game</PackageTags>
+        <TargetFramework>net7.0</TargetFramework>
+        <IncludeContentInPack>true</IncludeContentInPack>
+        <IncludeBuildOutput>false</IncludeBuildOutput>
+        <ContentTargetFolders>content</ContentTargetFolders>
+        <NoDefaultExcludes>true</NoDefaultExcludes>
+        <PackageIcon>icon.png</PackageIcon>
+    </PropertyGroup>
+
     <ItemGroup>
         <PackageReference Include="System.Runtime.Loader" Version="4.3.0" />
         <PackageReference Include="Microsoft.Build.Framework" Version="15.1.548"/>
@@ -22,6 +42,7 @@
     <ItemGroup>
         <EmbeddedResource Include="Assets\**\*" />
         <Content Include="$(MSBuildProjectName).props" Pack="true" PackagePath="build"/>
+        <None Include="README.md;icon.png" Pack="true" PackagePath="\"/>
     </ItemGroup>
 
     <Target Name="PackTaskDependencies" BeforeTargets="GenerateNuspec">
