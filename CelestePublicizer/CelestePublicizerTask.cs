@@ -30,7 +30,7 @@ public class PublicizeCelesteTask : Task {
     public override bool Execute() {
         const string PackageName = "CelestePublicizer";
         var celestePackages = PackageReference
-            .Where(item => item.TryGetMetadata("Identity", out string identity) && identity == PackageName)
+            .Where(item => item.TryGetMetadata("Identity", out var identity) && identity == PackageName)
             .ToArray();
 
         if (celestePackages.Length == 0) return true;
@@ -40,7 +40,7 @@ public class PublicizeCelesteTask : Task {
         }
         
         var celestePackage = celestePackages[0];
-        if (!celestePackage.TryGetMetadata("CelesteAssembly", out string celesteAssemblyPath)) {
+        if (!celestePackage.TryGetMetadata("CelesteAssembly", out var celesteAssemblyPath)) {
             Log.LogError($"The \"CelesteAssembly\" property needs to be specified for the {PackageName} package");
             return false;
         }
@@ -68,7 +68,7 @@ public class PublicizeCelesteTask : Task {
         PublicizeAssembly(celesteAssembly, origAssembly);
         
         var module = celesteAssembly.ManifestModule;
-        module.FatalWrite(outputAssemblyPath);
+        module!.FatalWrite(outputAssemblyPath);
 
         PublicizedReference = new TaskItem(outputAssemblyPath);
         celestePackage.CopyMetadataTo(PublicizedReference);
@@ -104,7 +104,7 @@ public class PublicizeCelesteTask : Task {
     }
     
     private static void PublicizeType(TypeDefinition typeDefinition, TypeDefinition maskTypeDefinition, OrigVisibilityAttribute attribute) {
-        if (!typeDefinition.IsNested && !typeDefinition.IsPublic || typeDefinition.IsNested && !typeDefinition.IsNestedPublic) {
+        if (typeDefinition is { IsNested: false, IsPublic: false } or { IsNested: true, IsNestedPublic: false }) {
             var origAttrs = typeDefinition.Attributes;
             
             typeDefinition.Attributes &= ~TypeAttributes.VisibilityMask;
@@ -113,7 +113,7 @@ public class PublicizeCelesteTask : Task {
             typeDefinition.CustomAttributes.Add(attribute.ToCustomAttribute(origAttrs & TypeAttributes.VisibilityMask));
         }
 
-        var maskMethods = maskTypeDefinition?.Methods.Select(x => x.FullName).ToArray();
+        var maskMethods = maskTypeDefinition.Methods.Select(x => x.FullName).ToArray();
         foreach (var methodDefinition in typeDefinition.Methods) {
             if (maskMethods != null && !maskMethods.Contains(methodDefinition.FullName))
                 continue;
@@ -126,7 +126,7 @@ public class PublicizeCelesteTask : Task {
             if (propertyDefinition.SetMethod is { } setMethod) PublicizeMethod(setMethod, attribute, ignoreCompilerGeneratedCheck: true);
         }
 
-        var maskFields = maskTypeDefinition?.Fields.Select(x => x.FullName).ToArray();
+        var maskFields = maskTypeDefinition.Fields.Select(x => x.FullName).ToArray();
         
         var eventNames = new HashSet<Utf8String?>(typeDefinition.Events.Select(e => e.Name));
         foreach (var fieldDefinition in typeDefinition.Fields)
@@ -185,7 +185,7 @@ public class PublicizeCelesteTask : Task {
 
         md5.TransformFinalBlock(bytes, 0, bytes.Length);
 
-        return ByteArrayToString(md5.Hash);
+        return ByteArrayToString(md5.Hash!);
     }
     
     private static string ByteArrayToString(IReadOnlyCollection<byte> data) {
@@ -204,7 +204,7 @@ internal static class Extensions {
         return metadataNames.Contains(metadataName);
     }
 
-    public static bool TryGetMetadata(this ITaskItem taskItem, string metadataName, [NotNullWhen(true)] out string metadata) {
+    public static bool TryGetMetadata(this ITaskItem taskItem, string metadataName, [NotNullWhen(true)] out string? metadata) {
         if (taskItem.HasMetadata(metadataName)) {
             metadata = taskItem.GetMetadata(metadataName);
             return true;
