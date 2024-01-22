@@ -14,7 +14,7 @@ using FieldAttributes = AsmResolver.PE.DotNet.Metadata.Tables.Rows.FieldAttribut
 using MethodAttributes = AsmResolver.PE.DotNet.Metadata.Tables.Rows.MethodAttributes;
 using TypeAttributes = AsmResolver.PE.DotNet.Metadata.Tables.Rows.TypeAttributes;
 
-namespace CelestePublicizer;
+namespace CelesteMod.Publicizer;
 
 public class PublicizeCelesteTask : Task {
 
@@ -28,7 +28,7 @@ public class PublicizeCelesteTask : Task {
     public ITaskItem PublicizedReference { get; private set; }
 
     public override bool Execute() {
-        const string PackageName = "CelestePublicizer";
+        const string PackageName = "CelesteMod.Publicizer";
         var celestePackages = PackageReference
             .Where(item => item.TryGetMetadata("Identity", out var identity) && identity == PackageName)
             .ToArray();

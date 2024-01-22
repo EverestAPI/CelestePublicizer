@@ -1,8 +1,8 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CelestePublicizer", "CelestePublicizer\CelestePublicizer.csproj", "{4BBF5281-6AA8-479D-A0F0-14B768C113C6}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CelesteMod.Publicizer", "CelesteMod.Publicizer\CelesteMod.Publicizer.csproj", "{4BBF5281-6AA8-479D-A0F0-14B768C113C6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CelestePublicizer.Testing", "CelestePublicizer.Testing\CelestePublicizer.Testing.csproj", "{34D1F076-EE81-466C-B10F-F8C03CD68D5D}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CelesteMod.Publicizer.Testing", "CelesteMod.Publicizer.Testing\CelesteMod.Publicizer.Testing.csproj", "{34D1F076-EE81-466C-B10F-F8C03CD68D5D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

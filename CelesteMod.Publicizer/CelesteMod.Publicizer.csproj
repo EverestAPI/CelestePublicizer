@@ -14,7 +14,7 @@
         <Title>Celeste Mod publicizer</Title>
         <Authors>EverestAPI</Authors>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
-        <PackageProjectUrl>https://github.com/EverestAPI/CelestePublicizer/blob/master/CelestePublicizer</PackageProjectUrl>
+        <PackageProjectUrl>https://github.com/EverestAPI/CelestePublicizer/blob/master/CelesteMod.Publicizer</PackageProjectUrl>
         <RepositoryUrl>https://github.com/EverestAPI/CelestePublicizer</RepositoryUrl>
         <PackageReleaseNotes>Automated release.</PackageReleaseNotes>
         <Copyright>Copyright (c) 2024 EverestAPI</Copyright>
@@ -47,7 +47,7 @@
 
     <Target Name="PackTaskDependencies" BeforeTargets="GenerateNuspec">
         <ItemGroup>
-            <_PackageFiles Include="$(OutputPath)CelestePublicizer.dll;$(OutputPath)AsmResolver*.dll">
+            <_PackageFiles Include="$(OutputPath)CelesteMod.Publicizer.dll;$(OutputPath)AsmResolver*.dll">
                 <PackagePath>build</PackagePath>
                 <Visible>false</Visible>
                 <BuildAction>Content</BuildAction>

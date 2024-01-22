@@ -1,9 +1,9 @@
 <Project>
     <PropertyGroup>
-        <_CelestePublicizer_TaskAssembly>$(MSBuildThisFileDirectory)$(MSBuildThisFileName).dll</_CelestePublicizer_TaskAssembly>
+        <_CelesteModPublicizer_TaskAssembly>$(MSBuildThisFileDirectory)$(MSBuildThisFileName).dll</_CelesteModPublicizer_TaskAssembly>
     </PropertyGroup>
             
-    <UsingTask TaskName="PublicizeCelesteTask" AssemblyFile="$(_CelestePublicizer_TaskAssembly)" />
+    <UsingTask TaskName="PublicizeCelesteTask" AssemblyFile="$(_CelesteModPublicizer_TaskAssembly)" />
     
     <Target Name="PublicizeCeleste" AfterTargets="ResolveReferences" BeforeTargets="FindReferenceAssembliesForReferences">
         <PublicizeCelesteTask IntermediateOutputPath="$(IntermediateOutputPath)" PackageReference="@(PackageReference)">

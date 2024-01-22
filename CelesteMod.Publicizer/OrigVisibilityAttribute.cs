@@ -8,7 +8,7 @@ using AsmResolver.DotNet.Signatures.Types;
 using AsmResolver.PE.DotNet.Cil;
 using AsmResolver.PE.DotNet.Metadata.Tables.Rows;
 
-namespace CelestePublicizer;
+namespace CelesteMod.Publicizer;
 
 internal class OrigVisibilityAttribute {
     private enum PublicizeTarget {
@@ -32,7 +32,7 @@ internal class OrigVisibilityAttribute {
         var baseConstructorReference = attributeReference.CreateMemberReference(".ctor", MethodSignature.CreateInstance(module.CorLibTypeFactory.Void)).ImportWith(module.DefaultImporter);
 
         Type = new TypeDefinition(
-            "CelestePublicizer", nameof(OrigVisibilityAttribute),
+            "CelesteMod.Publicizer", nameof(OrigVisibilityAttribute),
             TypeAttributes.NotPublic | TypeAttributes.Sealed,
             attributeReference
         );
