@@ -9,6 +9,8 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="CelesteMod.Publicizer" Version="1.0.0" CelesteAssembly="/media/Storage/Games/Celeste_NETCore3/Celeste.dll" />
+        <PackageReference Include="BepInEx.AssemblyPublicizer.MSBuild" Version="0.4.1" PrivateAssets="all" />
+        <!-- Make sure to replace the path below while testing! -->
+        <PackageReference Include="CelesteMod.Publicizer" Version="1.0.0" CelesteAssembly="/path/to/Celeste.dll" />
     </ItemGroup>
 </Project>
