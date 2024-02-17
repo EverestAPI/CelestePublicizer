@@ -15,6 +15,6 @@ jobs:
       - name: Get current tag
         run: echo "CURRENT_TAG=$(git describe --abbrev=0 --tags $(git rev-list --tags --max-count=1))" >> $GITHUB_ENV
       - name: Build
-        run: dotnet build CelesteMod.Publicizer/CelesteMod.Publicizer.csproj --configuration Release -p:version=${{env.CURRENT_TAG}} --no-restore
+        run: dotnet build CelesteMod.Publicizer/CelesteMod.Publicizer.csproj --configuration Release -p:version=${{env.CURRENT_TAG}}
       - name: Publish
         run: nuget push CelesteMod.Publicizer/bin/Release/CelesteMod.Publicizer.${{env.CURRENT_TAG}}.nupkg -Source 'https://api.nuget.org/v3/index.json' -ApiKey ${{secrets.NUGET_API_KEY}}
