@@ -33,10 +33,6 @@
         <PackageReference Include="Microsoft.Build.Framework" Version="15.1.548"/>
         <PackageReference Include="Microsoft.Build.Utilities.Core" Version="15.1.548"/>
         <PackageReference Include="AsmResolver.DotNet" Version="5.0.0" />
-        
-        <!-- This dependency is only required to provide the IgnoresAccessChecksToAttribute -->
-        <PackageReference Include="BepInEx.AssemblyPublicizer.MSBuild" Version="0.4.1" PrivateAssets="all" />
-        <Publicize Include="BepInEx.AssemblyPublicizer.MSBuild" PublicizeTarget="All" />
     </ItemGroup>
 
     <ItemGroup>
