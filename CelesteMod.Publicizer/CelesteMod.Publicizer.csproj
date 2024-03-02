@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
-        <TargetFramework>net7.0</TargetFramework>
+        <TargetFramework>netstandard2.0</TargetFramework>
         <LangVersion>latest</LangVersion>
         <Nullable>enable</Nullable>
 
@@ -20,7 +20,6 @@
         <Copyright>Copyright (c) 2024 EverestAPI</Copyright>
         <Description>Build task to publicize vanilla Celeste types/methods/fields.</Description>
         <PackageTags>publicizer;celeste;mod;game</PackageTags>
-        <TargetFramework>net7.0</TargetFramework>
         <IncludeContentInPack>true</IncludeContentInPack>
         <IncludeBuildOutput>false</IncludeBuildOutput>
         <ContentTargetFolders>content</ContentTargetFolders>
