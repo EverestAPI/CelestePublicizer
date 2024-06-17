@@ -1,3 +1,4 @@
+using System;
 using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
 using System.Collections.Generic;
@@ -9,6 +10,7 @@ using System.Security.Cryptography;
 using System.Text;
 using AsmResolver;
 using AsmResolver.DotNet;
+using AsmResolver.DotNet.Signatures;
 using BepInEx.AssemblyPublicizer;
 using FieldAttributes = AsmResolver.PE.DotNet.Metadata.Tables.Rows.FieldAttributes;
 using MethodAttributes = AsmResolver.PE.DotNet.Metadata.Tables.Rows.MethodAttributes;
@@ -60,7 +62,8 @@ public class PublicizeCelesteTask : Task {
         var origAssembly = AssemblyDefinition.FromBytes(origAssemblyBytes);
 
         var hash = ComputeHash(celesteAssemblyBytes, origAssemblyBytes);
-        if (File.Exists(outputHashPath) && File.ReadAllText(outputHashPath) == hash) {
+        if (File.Exists(outputHashPath) && File.ReadAllText(outputHashPath) == hash) 
+        {
             Log.LogMessage($"{celesteAssemblyPath} was already publicized, skipping");
         } 
         else
@@ -71,22 +74,29 @@ public class PublicizeCelesteTask : Task {
         
             var module = celesteAssembly.ManifestModule;
             module!.FatalWrite(outputAssemblyPath);
+            
+            var originalDocumentationPath = Path.ChangeExtension(celesteAssemblyPath, "xml");
+            if (File.Exists(originalDocumentationPath)) {
+                File.Copy(originalDocumentationPath, Path.ChangeExtension(outputAssemblyPath, "xml"), true);
+            }
+        
+            File.WriteAllText(outputHashPath, hash);
+            Log.LogMessage($"Publicized {celesteAssemblyPath}");
         }
 
         PublicizedReference = new TaskItem(outputAssemblyPath);
         celestePackage.CopyMetadataTo(PublicizedReference);
         celestePackage.RemoveMetadata("ReferenceAssembly");
         
-        var originalDocumentationPath = Path.ChangeExtension(celesteAssemblyPath, "xml");
-        if (File.Exists(originalDocumentationPath)) {
-            File.Copy(originalDocumentationPath, Path.ChangeExtension(outputAssemblyPath, "xml"), true);
-        }
-        
-        File.WriteAllText(outputHashPath, hash);
-        Log.LogMessage($"Publicized {celesteAssemblyPath}");
-        
         return true;
     }
+    
+    // class name -> member name -> (reason, warn/error)
+    private static Dictionary<string, Dictionary<string, (string Reason, bool Error)>> blacklist = new() {
+        {"Celeste.Player", new() {
+            {"onGround", ("Consider using OnGround instead", false)}
+        }},
+    };
     
     // Adapted from https://github.com/psyGamer/BepInEx.AssemblyPublicizer/blob/master/BepInEx.AssemblyPublicizer/AssemblyPublicizer.cs
     private static void PublicizeAssembly(AssemblyDefinition assembly, AssemblyDefinition maskAssembly)
@@ -107,6 +117,8 @@ public class PublicizeCelesteTask : Task {
     }
     
     private static void PublicizeType(TypeDefinition typeDefinition, TypeDefinition maskTypeDefinition, OrigVisibilityAttribute attribute) {
+        var typeBlacklist = blacklist.TryGetValue(typeDefinition.FullName, out var x) ? x : null;
+        
         if (typeDefinition is { IsNested: false, IsPublic: false } or { IsNested: true, IsNestedPublic: false }) {
             var origAttrs = typeDefinition.Attributes;
             
@@ -151,8 +163,10 @@ public class PublicizeCelesteTask : Task {
 
                 fieldDefinition.Attributes &= ~FieldAttributes.FieldAccessMask;
                 fieldDefinition.Attributes |= FieldAttributes.Public;
-                
+
                 fieldDefinition.CustomAttributes.Add(attribute.ToCustomAttribute(origAttrs & FieldAttributes.FieldAccessMask));
+                if (typeBlacklist?.TryGetValue(fieldDefinition.Name!, out var pair) ?? false)
+                    fieldDefinition.CustomAttributes.AddObsoleteAttribute(fieldDefinition.Module!, pair.Reason, pair.Error);
             }
         }
     }
@@ -162,15 +176,19 @@ public class PublicizeCelesteTask : Task {
             return;
         if (!ignoreCompilerGeneratedCheck && methodDefinition.IsCompilerGenerated())
             return;
+        if (methodDefinition.IsPublic) 
+            return;
+        
+        var typeBlacklist = blacklist.TryGetValue(methodDefinition.DeclaringType!.FullName, out var x) ? x : null;
 
-        if (!methodDefinition.IsPublic) {
-            var origAttrs = methodDefinition.Attributes;
+        var origAttrs = methodDefinition.Attributes;
             
-            methodDefinition.Attributes &= ~MethodAttributes.MemberAccessMask;
-            methodDefinition.Attributes |= MethodAttributes.Public;
+        methodDefinition.Attributes &= ~MethodAttributes.MemberAccessMask;
+        methodDefinition.Attributes |= MethodAttributes.Public;
             
-            methodDefinition.CustomAttributes.Add(attribute.ToCustomAttribute(origAttrs & MethodAttributes.MemberAccessMask));
-        }
+        methodDefinition.CustomAttributes.Add(attribute.ToCustomAttribute(origAttrs & MethodAttributes.MemberAccessMask));
+        if (typeBlacklist?.TryGetValue(methodDefinition.Name!, out var pair) ?? false)
+            methodDefinition.CustomAttributes.AddObsoleteAttribute(methodDefinition.Module!, pair.Reason, pair.Error);
     }
     
     // Adapted from https://github.com/BepInEx/BepInEx.AssemblyPublicizer/blob/master/BepInEx.AssemblyPublicizer.MSBuild/PublicizeTask.cs#L132-L168
@@ -215,5 +233,18 @@ internal static class Extensions {
 
         metadata = null;
         return false;
+    }
+    
+    public static void AddObsoleteAttribute(this IList<CustomAttribute> attributes, ModuleDefinition module, string reason, bool error)
+    {
+        var corLibTypeFactory = module.CorLibTypeFactory; 
+        var importer = module.DefaultImporter;
+        attributes.Add(new CustomAttribute(
+            importer.ImportType(typeof(ObsoleteAttribute)).CreateMemberReference(".ctor", MethodSignature.CreateInstance(corLibTypeFactory.Void, corLibTypeFactory.String, corLibTypeFactory.Boolean)).ImportWith(importer),
+            new CustomAttributeSignature([
+                new CustomAttributeArgument(corLibTypeFactory.String, reason),
+                new CustomAttributeArgument(corLibTypeFactory.Boolean, error),
+            ]))
+        );
     }
 }
