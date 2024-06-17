@@ -1,4 +1,3 @@
-using System;
 using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
 using System.Collections.Generic;
@@ -20,13 +19,13 @@ namespace CelesteMod.Publicizer;
 public class PublicizeCelesteTask : Task {
 
     [Required]
-    public string IntermediateOutputPath { get; set; }
+    public string IntermediateOutputPath { get; set; } = null!;
     
     [Required]
-    public ITaskItem[] PackageReference { get; set; }
+    public ITaskItem[] PackageReference { get; set; } = null!;
     
     [Output]
-    public ITaskItem PublicizedReference { get; private set; }
+    public ITaskItem PublicizedReference { get; private set; } = null!;
 
     public override bool Execute() {
         const string PackageName = "CelesteMod.Publicizer";
@@ -63,13 +62,16 @@ public class PublicizeCelesteTask : Task {
         var hash = ComputeHash(celesteAssemblyBytes, origAssemblyBytes);
         if (File.Exists(outputHashPath) && File.ReadAllText(outputHashPath) == hash) {
             Log.LogMessage($"{celesteAssemblyPath} was already publicized, skipping");
-            // return true;
+        } 
+        else
+        {
+            Log.LogMessage($"Publicizing {celesteAssemblyPath}...");
+            
+            PublicizeAssembly(celesteAssembly, origAssembly);
+        
+            var module = celesteAssembly.ManifestModule;
+            module!.FatalWrite(outputAssemblyPath);
         }
-        
-        PublicizeAssembly(celesteAssembly, origAssembly);
-        
-        var module = celesteAssembly.ManifestModule;
-        module!.FatalWrite(outputAssemblyPath);
 
         PublicizedReference = new TaskItem(outputAssemblyPath);
         celestePackage.CopyMetadataTo(PublicizedReference);
