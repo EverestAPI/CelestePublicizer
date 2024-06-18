@@ -47,8 +47,16 @@ public class PublicizeCelesteTask : Task {
             return false;
         }
         
-        string outputAssemblyPath = $"{IntermediateOutputPath}Celeste-publicized.dll";
-        string outputHashPath = $"{outputAssemblyPath}.md5";
+        // Clear old leftover DLLs
+        if (File.Exists($"{IntermediateOutputPath}Celeste-publicized.dll"))
+            File.Delete($"{IntermediateOutputPath}Celeste-publicized.dll");
+        if (File.Exists($"{IntermediateOutputPath}Celeste-publicized.dll.md5"))
+            File.Delete($"{IntermediateOutputPath}Celeste-publicized.dll.md5");
+        if (File.Exists($"{IntermediateOutputPath}Celeste-publicized.xml"))
+            File.Delete($"{IntermediateOutputPath}Celeste-publicized.xml");
+        
+        string outputAssemblyPath = Path.Combine(Path.GetTempPath(), "Celeste-publicized.dll");
+        string outputHashPath = Path.ChangeExtension(outputAssemblyPath, "md5");
         
         var taskAssembly = typeof(PublicizeCelesteTask).Assembly;
         
