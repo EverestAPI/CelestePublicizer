@@ -92,10 +92,11 @@ public class PublicizeCelesteTask : Task {
     }
     
     // class name -> member name -> (reason, warn/error)
-    private static Dictionary<string, Dictionary<string, (string Reason, bool Error)>> blacklist = new() {
-        {"Celeste.Player", new() {
-            {"onGround", ("Consider using OnGround instead", false)}
-        }},
+    private static readonly Dictionary<string, Dictionary<string, (string Reason, bool Error)>> blacklist = new() {
+        // TODO: There is still discoussion about this, so it's not yet published
+        // {"Celeste.Player", new() {
+        //     {"onGround", ("Consider using OnGround instead", false)}
+        // }},
     };
     
     // Adapted from https://github.com/psyGamer/BepInEx.AssemblyPublicizer/blob/master/BepInEx.AssemblyPublicizer/AssemblyPublicizer.cs
