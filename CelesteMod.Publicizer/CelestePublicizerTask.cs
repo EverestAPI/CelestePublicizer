@@ -99,12 +99,17 @@ public class PublicizeCelesteTask : Task {
         return true;
     }
     
-    // class name -> member name -> (reason, warn/error)
-    private static readonly Dictionary<string, Dictionary<string, (string Reason, bool Error)>> blacklist = new() {
-        // TODO: There is still discoussion about this, so it's not yet published
+    // class name -> member name -> reason
+    private static readonly Dictionary<string, Dictionary<string, string>> blacklist = new() {
+        // TODO: There is still discussion about this, so it's not yet published
         // {"Celeste.Player", new() {
-        //     {"onGround", ("Consider using OnGround instead", false)}
+        //     {"onGround", "Consider using OnGround instead"}
         // }},
+        {"Monocle.Entity", new() {
+            {"tag", "Using 'tag' directly can cause unexpected issues. Consider using 'Tag' instead"},
+            {"collider", "Using 'collider' directly can cause unexpected issues. Consider using 'Collider' instead"},
+            {"depth", "Using 'depth' directly can cause unexpected issues. Consider using 'Depth' instead"},
+        }}
     };
     
     // Adapted from https://github.com/psyGamer/BepInEx.AssemblyPublicizer/blob/master/BepInEx.AssemblyPublicizer/AssemblyPublicizer.cs
@@ -118,10 +123,8 @@ public class PublicizeCelesteTask : Task {
         var attribute = new OrigVisibilityAttribute(module);
         
         foreach (var typeDefinition in module.GetAllTypes()) {
-            if (!maskTypes.ContainsKey(typeDefinition.FullName))
-                continue;
-
-            PublicizeType(typeDefinition, maskTypes[typeDefinition.FullName], attribute);
+            if (maskTypes.TryGetValue(typeDefinition.FullName, out var type))
+                PublicizeType(typeDefinition, type, attribute);
         }
     }
     
@@ -137,7 +140,7 @@ public class PublicizeCelesteTask : Task {
             typeDefinition.CustomAttributes.Add(attribute.ToCustomAttribute(origAttrs & TypeAttributes.VisibilityMask));
         }
 
-        var maskMethods = maskTypeDefinition.Methods.Select(x => x.FullName).ToArray();
+        var maskMethods = maskTypeDefinition.Methods.Select(def => def.FullName).ToArray();
         foreach (var methodDefinition in typeDefinition.Methods) {
             if (maskMethods != null && !maskMethods.Contains(methodDefinition.FullName))
                 continue;
@@ -150,7 +153,7 @@ public class PublicizeCelesteTask : Task {
             if (propertyDefinition.SetMethod is { } setMethod) PublicizeMethod(setMethod, attribute, ignoreCompilerGeneratedCheck: true);
         }
 
-        var maskFields = maskTypeDefinition.Fields.Select(x => x.FullName).ToArray();
+        var maskFields = maskTypeDefinition.Fields.Select(def => def.FullName).ToArray();
         
         var eventNames = new HashSet<Utf8String?>(typeDefinition.Events.Select(e => e.Name));
         foreach (var fieldDefinition in typeDefinition.Fields)
@@ -174,8 +177,8 @@ public class PublicizeCelesteTask : Task {
                 fieldDefinition.Attributes |= FieldAttributes.Public;
 
                 fieldDefinition.CustomAttributes.Add(attribute.ToCustomAttribute(origAttrs & FieldAttributes.FieldAccessMask));
-                if (typeBlacklist?.TryGetValue(fieldDefinition.Name!, out var pair) ?? false)
-                    fieldDefinition.CustomAttributes.AddObsoleteAttribute(fieldDefinition.Module!, pair.Reason, pair.Error);
+                if (typeBlacklist?.TryGetValue(fieldDefinition.Name!, out var reason) ?? false)
+                    fieldDefinition.CustomAttributes.AddObsoleteAttribute(fieldDefinition.Module!, reason, error: false);
             }
         }
     }
@@ -196,8 +199,8 @@ public class PublicizeCelesteTask : Task {
         methodDefinition.Attributes |= MethodAttributes.Public;
             
         methodDefinition.CustomAttributes.Add(attribute.ToCustomAttribute(origAttrs & MethodAttributes.MemberAccessMask));
-        if (typeBlacklist?.TryGetValue(methodDefinition.Name!, out var pair) ?? false)
-            methodDefinition.CustomAttributes.AddObsoleteAttribute(methodDefinition.Module!, pair.Reason, pair.Error);
+        if (typeBlacklist?.TryGetValue(methodDefinition.Name!, out var reason) ?? false)
+            methodDefinition.CustomAttributes.AddObsoleteAttribute(methodDefinition.Module!, reason, error: false);
     }
     
     // Adapted from https://github.com/BepInEx/BepInEx.AssemblyPublicizer/blob/master/BepInEx.AssemblyPublicizer.MSBuild/PublicizeTask.cs#L132-L168
@@ -215,7 +218,7 @@ public class PublicizeCelesteTask : Task {
 
         md5.TransformFinalBlock(bytes, 0, bytes.Length);
 
-        return ByteArrayToString(md5.Hash!);
+        return ByteArrayToString(md5.Hash);
     }
     
     private static string ByteArrayToString(IReadOnlyCollection<byte> data) {
