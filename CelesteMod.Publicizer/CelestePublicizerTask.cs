@@ -12,9 +12,9 @@ using AsmResolver;
 using AsmResolver.DotNet;
 using AsmResolver.DotNet.Signatures;
 using BepInEx.AssemblyPublicizer;
-using FieldAttributes = AsmResolver.PE.DotNet.Metadata.Tables.Rows.FieldAttributes;
-using MethodAttributes = AsmResolver.PE.DotNet.Metadata.Tables.Rows.MethodAttributes;
-using TypeAttributes = AsmResolver.PE.DotNet.Metadata.Tables.Rows.TypeAttributes;
+using FieldAttributes = AsmResolver.PE.DotNet.Metadata.Tables.FieldAttributes;
+using MethodAttributes = AsmResolver.PE.DotNet.Metadata.Tables.MethodAttributes;
+using TypeAttributes = AsmResolver.PE.DotNet.Metadata.Tables.TypeAttributes;
 
 namespace CelesteMod.Publicizer;
 

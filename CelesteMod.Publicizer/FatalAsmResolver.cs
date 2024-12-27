@@ -9,7 +9,7 @@ using AsmResolver.DotNet.Builder;
 using AsmResolver.DotNet.Serialized;
 using AsmResolver.IO;
 using AsmResolver.PE;
-using AsmResolver.PE.DotNet.Builder;
+using AsmResolver.PE.Builder;
 
 namespace BepInEx.AssemblyPublicizer;
 
@@ -43,7 +43,7 @@ internal static class FatalAsmResolver
         var result = new ManagedPEImageBuilder().CreateImage(module);
         if (result.HasFailed)
         {
-            throw new AggregateException("Construction of the PE image failed with one or more errors.", result.DiagnosticBag.Exceptions);
+            throw new AggregateException("Construction of the PE image failed with one or more errors.", (result.ErrorListener as DiagnosticBag)?.Exceptions ?? []);
         }
 
         using var fileStream = File.Create(filePath);
